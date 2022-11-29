@@ -1,0 +1,38 @@
+docker run -d --name sonarqube-article -p 9000:9000 sonarqube:community
+
+pipeline{
+    agent any
+    tools {
+        maven 'MAVEN'
+    }
+    
+    stages {
+       stage('GetCode') {
+            steps {
+               checkout([$class: 'GitSCM', branches: [[name: '*/master']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/SonarSource/sonar-scanning-examples.git']]])
+            }
+         }
+         
+         
+        stage('sonarqube') {
+  environment {
+    SCANNER_HOME = tool 'SonarQube Scanner'
+    ORGANIZATION = "igorstojanovski-github"
+    PROJECT_NAME = "maven-basic"
+    }
+  steps {
+    withSonarQubeEnv('sonarqube') {
+        sh '''$SCANNER_HOME/bin/sonar-scanner -Dsonar.organization=$ORGANIZATION \
+        -Dsonar.java.binaries=sonarqube-scanner-maven/maven-basic/src/ \
+        -Dsonar.projectKey=$PROJECT_NAME \
+        -D sonar.login=admin \
+        -D sonar.password=bala123 \
+        -Dsonar.sources=.'''
+		}
+	}	
+        }      
+                
+    }
+}
+
+
